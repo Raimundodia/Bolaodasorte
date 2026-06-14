@@ -12,8 +12,8 @@
 
     <header class="bg-green-600 text-white py-6 shadow-md sticky top-0 z-40">
         <div class="container mx-auto px-4 flex justify-between items-center">
-            <h1 class="text-2xl font-bold tracking-wide">🏆 Bolão de Resultados</h1>
-            <button onclick="toggleAdmin()" class="bg-green-700 hover:bg-green-800 px-4 py-2 rounded-lg text-sm font-semibold transition">
+            <h1 class="text-2xl font-bold tracking-wide">🏆 Bolão da Sorte</h1>
+            <button onclick="abrirLoginAdmin()" class="bg-green-700 hover:bg-green-800 px-4 py-2 rounded-lg text-sm font-semibold transition">
                 Painel do Organizador (Admin)
             </button>
         </div>
@@ -48,8 +48,14 @@
                 <form id="form-palpite" onsubmit="enviarPalpite(event)" class="space-y-4">
                     <input type="hidden" id="palpite-jogo-id">
                     <input type="hidden" id="palpite-valor-jogo">
+                    <input type="hidden" id="palpite-horario-fechamento">
+                    
                     <div class="bg-gray-100 p-4 rounded-lg font-bold text-center text-lg text-gray-700" id="texto-jogo-selecionado">
                         Time A vs Time B
+                    </div>
+
+                    <div id="aviso-fechamento" class="hidden bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg font-semibold text-center">
+                        ⏰ Este bolão foi fechado. Não é mais possível fazer palpites.
                     </div>
                     
                     <div class="grid grid-cols-2 gap-4">
@@ -102,13 +108,21 @@
                     Fazer outro palpite
                 </button>
             </div>
+
+            <!-- SEÇÃO: BOLÕES FINALIZADOS PÚBLICA -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <h3 class="text-lg font-bold mb-4 text-gray-700">📋 Resultados dos Bolões</h3>
+                <div id="container-boloes-finalizados-publica" class="grid gap-4">
+                    <p class="text-gray-400 text-sm text-center py-6">Nenhum bolão finalizado ainda.</p>
+                </div>
+            </div>
         </section>
 
         <!-- SEÇÃO ADMIN -->
         <section id="admin-section" class="space-y-8 hidden">
             <div class="border-b border-gray-200 pb-4 flex justify-between items-center">
                 <h2 class="text-2xl font-bold text-gray-800">⚙️ Painel Administrativo</h2>
-                <button onclick="toggleAdmin()" class="text-sm text-green-600 hover:text-green-700 font-bold underline">Voltar</button>
+                <button onclick="sairAdmin()" class="text-sm text-green-600 hover:text-green-700 font-bold underline">Sair / Voltar</button>
             </div>
 
             <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
@@ -120,14 +134,14 @@
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-gray-600 mb-1">WhatsApp para Receber</label>
-                        <input type="tel" id="admin-wpp-receber" value="5511999999999" class="w-full border border-gray-300 rounded-lg p-2 outline-none focus:ring-2 focus:ring-green-500">
+                        <input type="tel" id="admin-wpp-receber" value="11999999999" class="w-full border border-gray-300 rounded-lg p-2 outline-none focus:ring-2 focus:ring-green-500">
                     </div>
                 </div>
             </div>
 
             <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                 <h3 class="text-lg font-bold mb-4 text-gray-700">2. Cadastrar Novo Jogo</h3>
-                <form onsubmit="cadastrarJogo(event)" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                <form onsubmit="cadastrarJogo(event)" class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
                     <div>
                         <label class="block text-xs font-semibold text-gray-600 mb-1">Time A</label>
                         <input type="text" id="admin-time-a" required placeholder="Brasil" class="w-full border border-gray-300 rounded-lg p-2 outline-none focus:ring-2 focus:ring-green-500">
@@ -139,6 +153,10 @@
                     <div>
                         <label class="block text-xs font-semibold text-gray-600 mb-1">Preço (R$)</label>
                         <input type="number" id="admin-preco" step="0.01" value="10.00" class="w-full border border-gray-300 rounded-lg p-2 outline-none focus:ring-2 focus:ring-green-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Fechamento</label>
+                        <input type="datetime-local" id="admin-fechamento" class="w-full border border-gray-300 rounded-lg p-2 outline-none focus:ring-2 focus:ring-green-500">
                     </div>
                     <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold p-2.5 rounded-lg transition">
                         Adicionar
@@ -165,14 +183,79 @@
                     <p class="text-gray-400 text-sm text-center py-6">Nenhum bolão finalizado ainda.</p>
                 </div>
             </div>
+
+            <!-- SEÇÃO: PAGAMENTO DE PRÊMIOS -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <h3 class="text-lg font-bold mb-4 text-gray-700">6. 💰 Pagamento de Prêmios (Ganhadores)</h3>
+                <div id="container-pagamento-premios" class="space-y-4">
+                    <p class="text-gray-400 text-sm text-center py-6">Nenhum ganhador para pagar ainda.</p>
+                </div>
+            </div>
         </section>
     </main>
+
+    <!-- ===================== MODAL DE LOGIN ADMIN ===================== -->
+    <div id="modal-login-admin" class="fixed inset-0 bg-black/60 flex items-center justify-center p-4 hidden z-[70]">
+        <div class="bg-white rounded-2xl p-8 max-w-sm w-full shadow-2xl">
+            <div class="text-center mb-6">
+                <div class="text-5xl mb-3">🔐</div>
+                <h2 class="text-2xl font-black text-gray-800">Área Restrita</h2>
+                <p class="text-sm text-gray-500 mt-1">Acesso exclusivo para o organizador</p>
+            </div>
+
+            <form id="form-login-admin" onsubmit="realizarLoginAdmin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Usuário</label>
+                    <input
+                        type="text"
+                        id="login-admin-usuario"
+                        required
+                        placeholder="Digite o usuário"
+                        autocomplete="username"
+                        class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-500 outline-none text-gray-800"
+                    >
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Senha</label>
+                    <div class="relative">
+                        <input
+                            type="password"
+                            id="login-admin-senha"
+                            required
+                            placeholder="Digite a senha"
+                            autocomplete="current-password"
+                            class="w-full border border-gray-300 rounded-lg p-3 pr-10 focus:ring-2 focus:ring-green-500 outline-none text-gray-800"
+                        >
+                        <button type="button" onclick="toggleSenhaVisivel()" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-lg" title="Mostrar/ocultar senha">👁</button>
+                    </div>
+                </div>
+
+                <div id="login-admin-erro" class="hidden bg-red-50 border border-red-200 text-red-700 text-sm p-3 rounded-lg font-semibold text-center">
+                    ❌ Usuário ou senha incorretos.
+                </div>
+
+                <button
+                    type="submit"
+                    class="w-full bg-green-600 hover:bg-green-700 text-white font-bold p-3 rounded-lg transition shadow-md text-base"
+                >
+                    Entrar no Painel
+                </button>
+                <button
+                    type="button"
+                    onclick="fecharLoginAdmin()"
+                    class="w-full bg-gray-100 hover:bg-gray-200 text-gray-600 font-semibold p-3 rounded-lg transition text-sm"
+                >
+                    Cancelar
+                </button>
+            </form>
+        </div>
+    </div>
 
     <!-- MODAL DE COMPROVANTE -->
     <div id="modal-comprovante" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 hidden z-[60]">
         <div class="bg-white rounded-xl p-6 max-w-sm w-full shadow-2xl">
             <div id="comprovante-area" class="bg-white p-6 border-2 border-dashed border-gray-300 rounded-lg text-center">
-                <div class="text-green-600 text-4xl mb-2">🏆</div>
+                <div class="text-green-600 text-3xl mb-2 font-black">🏆</div>
                 <h4 class="font-black text-xl text-gray-800 uppercase">Comprovante de Palpite</h4>
                 <p class="text-[10px] text-gray-400 mb-4" id="comp-id">ID: #000000</p>
                 
@@ -335,9 +418,14 @@
 
     <script>
         const SUPABASE_URL = "https://lmfezejuqoibhcuoqfoq.supabase.co";
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxtZmV6ZWp1cW9pYmhjdW9xZm9xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEzMDU0MTYsImV4cCI6MjA5Njg4MTQxNn0.vldQNqTkTS42yr9gUahRRq_7wRFoIym1YJobZ45-XH8"; 
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxtZmV6ZWp1cW9pYmhjdW9xZm9xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEzMDU0MTYsImV4cCI6MjA5Njg4MTQxNn0.vldQNqTkTS42yr9gUahRRq_7wRFoIym1YJobZ45-XH8";
         
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // Credenciais de Admin
+        const ADMIN_USER = "admin";
+        const ADMIN_PASS = "bolao2025";
+        
         let jogoSelecionadoId = null;
         let cacheJogos = [];
         let cachePalpites = [];
@@ -345,10 +433,29 @@
         let auditoriaBolaoAtual = null;
         let linkPalpiteAtual = null;
         let bolaoEditandoAtual = null;
+        let adminLogado = false;
 
         function showError(msg) {
             document.getElementById('error-message').innerText = msg;
             document.getElementById('error-console').classList.remove('hidden');
+        }
+
+        function formatarDataHora(data) {
+            if (!data) return '';
+            try {
+                const d = new Date(data);
+                return d.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+            } catch(e) { return ''; }
+        }
+
+        function verificarFechamento(dataFechamento) {
+            if (!dataFechamento) return false;
+            try {
+                const agora = new Date();
+                const fechamento = new Date(dataFechamento);
+                if (isNaN(fechamento.getTime())) return false;
+                return agora >= fechamento;
+            } catch(e) { return false; }
         }
 
         async function init() {
@@ -360,15 +467,24 @@
                 renderizarJogosAdmin(jogos);
                 await carregarPalpitesAdmin();
                 await carregarBoleosFinalizados(jogos);
+                await carregarBoleosFinalizadosPublica(jogos);
                 await atualizarPotesSeparados(jogos);
-            } catch (err) {
-                showError("Erro: " + err.message);
-            }
-        }
+                await carregarPagamentoPremios(jogos);
 
-        function toggleAdmin() {
-            document.getElementById('user-section').classList.toggle('hidden');
-            document.getElementById('admin-section').classList.toggle('hidden');
+                // CORREÇÃO 1: Lógica de link de palpite na URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const jogoIdLink = urlParams.get('jogo');
+                if (jogoIdLink) {
+                    const jogoIdNum = parseInt(jogoIdLink);
+                    const jogoLink = jogos.find(j => j.id === jogoIdNum);
+                    if (jogoLink && jogoLink.status && jogoLink.status.toString().toLowerCase().trim() === 'aberto') {
+                        const preco = jogoLink.valor_aposta ? parseFloat(jogoLink.valor_aposta).toFixed(2) : "10.00";
+                        selecionarJogo(jogoLink.id, `${jogoLink.time_a} x ${jogoLink.time_b}`, preco, jogoLink.horario_fechamento);
+                    }
+                }
+            } catch (err) {
+                showError("Erro ao carregar dados: " + err.message);
+            }
         }
 
         async function atualizarPotesSeparados(jogos) {
@@ -385,15 +501,17 @@
 
                 for (let jogo of jogosAbertos) {
                     const { data: palpites } = await _supabase.from('palpites').select('*').eq('jogo_id', jogo.id).eq('pago', true);
-                    const totalLiquido = (palpites ? palpites.length : 0) * (jogo.valor_aposta || 10) * 0.80;
+                    const totalLiquido = (palpites ? palpites.length : 0) * (parseFloat(jogo.valor_aposta) || 10) * 0.80;
+                    const fechado = verificarFechamento(jogo.horario_fechamento);
                     
                     const card = document.createElement('div');
-                    card.className = "bg-green-900 p-4 rounded-xl shadow-lg text-white border-l-4 border-green-400";
+                    card.className = `bg-green-900 p-4 rounded-xl shadow-lg text-white border-l-4 ${fechado ? 'border-red-400 opacity-70' : 'border-green-400'}`;
                     card.innerHTML = `
                         <div class="flex justify-between items-start">
                             <div>
                                 <h4 class="text-[10px] text-green-300 font-bold uppercase tracking-wider">${jogo.time_a} vs ${jogo.time_b}</h4>
                                 <div class="text-xl font-black mt-1">R$ ${totalLiquido.toFixed(2)}</div>
+                                <div class="text-[10px] text-green-200 mt-1">${fechado ? '🔒 FECHADO' : '⏰ ' + formatarDataHora(jogo.horario_fechamento)}</div>
                             </div>
                             <div class="bg-green-800 text-[10px] px-2 py-1 rounded font-bold">${palpites ? palpites.length : 0} Apostas</div>
                         </div>
@@ -413,38 +531,59 @@
             }
             jogosAbertos.forEach(jogo => {
                 const card = document.createElement('div');
-                card.className = "flex justify-between items-center p-4 rounded-xl border-2 bg-white border-gray-100 hover:border-green-400 cursor-pointer transition";
+                const fechado = verificarFechamento(jogo.horario_fechamento);
+                card.className = `flex justify-between items-center p-4 rounded-xl border-2 bg-white ${fechado ? 'border-red-300 opacity-60 cursor-not-allowed' : 'border-gray-100 hover:border-green-400 cursor-pointer'} transition`;
                 const preco = jogo.valor_aposta ? parseFloat(jogo.valor_aposta).toFixed(2) : "10.00";
-                card.onclick = () => selecionarJogo(jogo.id, `${jogo.time_a} x ${jogo.time_b}`, preco);
+                
+                if (!fechado) {
+                    card.onclick = () => selecionarJogo(jogo.id, `${jogo.time_a} x ${jogo.time_b}`, preco, jogo.horario_fechamento);
+                }
+                
                 card.innerHTML = `
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-3 flex-1">
                         <div class="bg-green-100 text-green-700 w-10 h-10 rounded-full flex items-center justify-center font-bold">⚽</div>
                         <div>
                             <span class="font-bold text-gray-800">${jogo.time_a} x ${jogo.time_b}</span>
                             <span class="text-xs text-gray-500 block">Aposta: R$ ${preco}</span>
+                            <span class="text-[10px] ${fechado ? 'text-red-600 font-bold' : 'text-gray-400'}">${fechado ? '🔒 Fechado' : '⏰ Fecha: ' + formatarDataHora(jogo.horario_fechamento)}</span>
                         </div>
                     </div>
-                    <button class="bg-green-600 text-white font-bold px-5 py-2 rounded-lg text-sm">Palpitar</button>
+                    <button class="bg-green-600 text-white font-bold px-5 py-2 rounded-lg text-sm ${fechado ? 'opacity-50 cursor-not-allowed' : 'hover:bg-green-700'}">${fechado ? 'Fechado' : 'Palpitar'}</button>
                 `;
                 container.appendChild(card);
             });
         }
 
-        function selecionarJogo(id, texto, valor) {
+        function selecionarJogo(id, texto, valor, horarioFechamento) {
             jogoSelecionadoId = id;
             document.getElementById('palpite-jogo-id').value = id;
             document.getElementById('palpite-valor-jogo').value = valor;
+            document.getElementById('palpite-horario-fechamento').value = horarioFechamento || '';
             document.getElementById('texto-jogo-selecionado').innerText = texto;
             document.getElementById('btn-confirmar-palpite').innerText = `Confirmar (R$ ${valor})`;
             document.getElementById('div-palpite').classList.remove('hidden');
+            document.getElementById('aviso-fechamento').classList.add('hidden');
             document.getElementById('div-palpite').scrollIntoView({ behavior: 'smooth' });
         }
 
         async function enviarPalpite(e) {
             e.preventDefault();
+            const btn = document.getElementById('btn-confirmar-palpite');
+            btn.disabled = true;
+            btn.innerText = "Enviando...";
+
             try {
                 const jogoId = document.getElementById('palpite-jogo-id').value;
                 const valorJogo = document.getElementById('palpite-valor-jogo').value;
+                const horarioFechamento = document.getElementById('palpite-horario-fechamento').value;
+
+                if (verificarFechamento(horarioFechamento)) {
+                    document.getElementById('aviso-fechamento').classList.remove('hidden');
+                    btn.disabled = false;
+                    btn.innerText = `Confirmar (R$ ${valorJogo})`;
+                    return;
+                }
+
                 const palpiteA = parseInt(document.getElementById('gols-a').value);
                 const palpiteB = parseInt(document.getElementById('gols-b').value);
                 const nome = document.getElementById('nome-user').value;
@@ -452,8 +591,14 @@
                 const formaPagamento = document.querySelector('input[name="forma_pagamento"]:checked').value;
 
                 const { error } = await _supabase.from('palpites').insert([{
-                    jogo_id: jogoId, palpite_a: palpiteA, palpite_b: palpiteB, nome: nome, whatsapp: whatsapp, pago: false
+                    jogo_id: parseInt(jogoId), 
+                    palpite_a: palpiteA, 
+                    palpite_b: palpiteB, 
+                    nome: nome, 
+                    whatsapp: whatsapp, 
+                    pago: false
                 }]);
+                
                 if (error) throw error;
 
                 const chavePix = document.getElementById('admin-chave-pix').value;
@@ -461,24 +606,33 @@
                 document.getElementById('checkout-valor-texto').innerText = `R$ ${parseFloat(valorJogo).toFixed(2)}`;
                 
                 const instrucoes = document.getElementById('instrucoes-pagamento');
-                const msg = encodeURIComponent(`Fiz um palpite de ${palpiteA}x${palpiteB}. Nome: ${nome}.`);
+                const msg = encodeURIComponent(`🏆 *Novo Palpite - Bolão da Sorte*\n\n⚽ Jogo: ${document.getElementById('texto-jogo-selecionado').innerText}\n🎯 Palpite: ${palpiteA} x ${palpiteB}\n👤 Nome: ${nome}\n💰 Valor: R$ ${parseFloat(valorJogo).toFixed(2)}`);
+                
+                // CORREÇÃO 2: Adicionar +55 automaticamente ao WhatsApp
+                const wppReceber55 = wppReceber.replace(/\D/g, '').replace(/^55/, '') || wppReceber;
+                const wppComPrefixo = '55' + wppReceber55;
                 
                 if (formaPagamento === 'pix') {
                     instrucoes.innerHTML = `
                         <h4 class="font-bold text-green-800 mb-2">Pagar com PIX</h4>
                         <code class="block bg-white p-3 border border-green-300 rounded text-green-900 font-bold mb-4 text-center">${chavePix}</code>
-                        <a href="https://wa.me/${wppReceber}?text=${msg}" target="_blank" class="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-bold block text-center">📱 Enviar Comprovante</a>
+                        <a href="https://wa.me/${wppComPrefixo}?text=${msg}" target="_blank" class="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-bold block text-center">📱 Enviar Comprovante</a>
                     `;
                 } else {
                     instrucoes.innerHTML = `
                         <h4 class="font-bold text-orange-800 mb-2">Pagar em Espécie</h4>
-                        <a href="https://wa.me/${wppReceber}?text=${msg}" target="_blank" class="w-full bg-orange-600 text-white py-3 px-4 rounded-lg font-bold block text-center">✅ Avisar no WhatsApp</a>
+                        <a href="https://wa.me/${wppComPrefixo}?text=${msg}" target="_blank" class="w-full bg-orange-600 text-white py-3 px-4 rounded-lg font-bold block text-center">✅ Avisar no WhatsApp</a>
                     `;
                 }
                 document.getElementById('div-palpite').classList.add('hidden');
                 document.getElementById('div-pagamento').classList.remove('hidden');
                 init();
-            } catch (err) { alert("Erro: " + err.message); }
+            } catch (err) { 
+                alert("Erro ao confirmar palpite: " + err.message); 
+            } finally {
+                btn.disabled = false;
+                btn.innerText = `Confirmar (R$ ${document.getElementById('palpite-valor-jogo').value})`;
+            }
         }
 
         function fecharPagamentoEVoltar() {
@@ -491,19 +645,49 @@
                 const timeA = document.getElementById('admin-time-a').value;
                 const timeB = document.getElementById('admin-time-b').value;
                 const preco = parseFloat(document.getElementById('admin-preco').value) || 10.00;
-                await _supabase.from('jogos').insert([{ time_a: timeA, time_b: timeB, status: 'aberto', valor_aposta: preco }]);
-                alert("Jogo cadastrado!");
+                const fechamentoInput = document.getElementById('admin-fechamento').value;
+                
+                const dadosInsercao = { 
+                    time_a: timeA, 
+                    time_b: timeB, 
+                    status: 'aberto', 
+                    valor_aposta: preco
+                };
+
+                if (fechamentoInput) {
+                    try {
+                        dadosInsercao.horario_fechamento = new Date(fechamentoInput).toISOString();
+                    } catch(e) {}
+                }
+                
+                const { error } = await _supabase.from('jogos').insert([dadosInsercao]);
+                
+                if (error) {
+                    if (error.message.includes('column') || error.message.includes('horario_fechamento')) {
+                        delete dadosInsercao.horario_fechamento;
+                        const { error: retryError } = await _supabase.from('jogos').insert([dadosInsercao]);
+                        if (retryError) throw retryError;
+                    } else {
+                        throw error;
+                    }
+                }
+
+                alert("Jogo cadastrado com sucesso!");
                 document.getElementById('admin-time-a').value = '';
                 document.getElementById('admin-time-b').value = '';
+                document.getElementById('admin-preco').value = '10.00';
+                document.getElementById('admin-fechamento').value = '';
                 init();
-            } catch (err) { alert("Erro: " + err.message); }
+            } catch (err) { alert("Erro ao cadastrar: " + err.message); }
         }
 
         async function excluirJogo(id) {
-            if (confirm("Excluir?")) {
-                await _supabase.from('palpites').delete().eq('jogo_id', id);
-                await _supabase.from('jogos').delete().eq('id', id);
-                init();
+            if (confirm("Deseja realmente excluir este jogo e todos os seus palpites?")) {
+                try {
+                    await _supabase.from('palpites').delete().eq('jogo_id', id);
+                    await _supabase.from('jogos').delete().eq('id', id);
+                    init();
+                } catch (err) { alert("Erro ao excluir: " + err.message); }
             }
         }
 
@@ -565,7 +749,7 @@
                 
                 const palpitesPorJogo = {};
                 (palpites || []).forEach(p => {
-                    if (p.jogos.status === 'aberto') {
+                    if (p.jogos && p.jogos.status === 'aberto') {
                         if (!palpitesPorJogo[p.jogo_id]) {
                             palpitesPorJogo[p.jogo_id] = [];
                         }
@@ -626,7 +810,6 @@
             } catch (err) { console.error(err); }
         }
 
-        // NOVA FUNÇÃO: ABRIR LINK DE PALPITE
         function abrirLinkPalpite(jogoId) {
             linkPalpiteAtual = jogoId;
             const jogo = cacheJogos.find(j => j.id === jogoId);
@@ -702,6 +885,47 @@
             } catch (err) { console.error(err); }
         }
 
+        async function carregarBoleosFinalizadosPublica(jogos) {
+            try {
+                const container = document.getElementById('container-boloes-finalizados-publica');
+                const jogosFinalizados = (jogos || []).filter(j => j.status && j.status.toString().toLowerCase().trim() === 'finalizado');
+                
+                if (jogosFinalizados.length === 0) {
+                    container.innerHTML = '<p class="text-gray-400 text-sm text-center py-6">Nenhum bolão finalizado ainda.</p>';
+                    return;
+                }
+
+                container.innerHTML = '';
+
+                for (let jogo of jogosFinalizados) {
+                    const { data: palpites } = await _supabase.from('palpites').select('*').eq('jogo_id', jogo.id).eq('pago', true);
+                    const ganhadores = palpites ? palpites.filter(p => p.palpite_a === jogo.placar_a && p.palpite_b === jogo.placar_b) : [];
+                    
+                    const card = document.createElement('div');
+                    card.className = "p-4 border-2 border-blue-300 rounded-lg bg-gradient-to-r from-blue-50 to-cyan-50 cursor-pointer hover:shadow-lg transition";
+                    card.onclick = () => abrirAuditoria(jogo, palpites, ganhadores);
+                    
+                    const statusGanhador = ganhadores.length > 0 ? '🏆 COM GANHADOR(ES)' : '🎰 SEM GANHADORES';
+                    const corStatus = ganhadores.length > 0 ? 'text-green-700' : 'text-red-700';
+                    
+                    card.innerHTML = `
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <h4 class="font-bold text-lg text-gray-800">${jogo.time_a} x ${jogo.time_b}</h4>
+                                <p class="text-sm text-gray-600">Placar: <span class="font-bold">${jogo.placar_a} x ${jogo.placar_b}</span></p>
+                            </div>
+                            <span class="text-xs font-bold px-2 py-1 rounded-full bg-blue-200 text-blue-800">FINALIZADO</span>
+                        </div>
+                        <div class="flex justify-between items-center mt-3 pt-3 border-t border-blue-200">
+                            <span class="text-xs font-bold ${corStatus}">${statusGanhador}</span>
+                            <span class="text-xs text-gray-600">${palpites ? palpites.length : 0} Palpites • ${ganhadores.length} Ganhador(es)</span>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                }
+            } catch (err) { console.error(err); }
+        }
+
         async function abrirAuditoria(jogo, todosPalpites, ganhadores) {
             try {
                 auditoriaBolaoAtual = { jogo, todosPalpites, ganhadores };
@@ -754,6 +978,12 @@
                     palpitesContainer.appendChild(div);
                 });
 
+                // Mostrar/ocultar botões de edição e exclusão apenas para admin
+                const botoesAdmin = document.querySelectorAll('#modal-auditoria button[onclick*="editarBolaoFinalizado"], #modal-auditoria button[onclick*="excluirBolaoFinalizado"]');
+                botoesAdmin.forEach(btn => {
+                    btn.style.display = adminLogado ? 'block' : 'none';
+                });
+
                 document.getElementById('modal-auditoria').classList.remove('hidden');
             } catch (err) { alert("Erro: " + err.message); }
         }
@@ -772,9 +1002,9 @@
             const comissaoBanca = valorTotalArrecadado * 0.20;
             const premioLiquidoTotal = valorTotalArrecadado - comissaoBanca;
 
-            let mensagem = `🏆 RESULTADO DO BOLÃO 🏆\n\n`;
+            let mensagem = `🏆 *RESULTADO DO BOLÃO - BOLÃO DA SORTE* 🏆\n\n`;
             mensagem += `⚽ ${jogo.time_a} x ${jogo.time_b}\n`;
-            mensagem += `📊 Placar Final: ${jogo.placar_a} x ${jogo.placar_b}\n\n`;
+            mensagem += `📊 Placar Final: ${jogo.placar_a ?? 0} x ${jogo.placar_b ?? 0}\n\n`;
             mensagem += `💰 RESUMO FINANCEIRO:\n`;
             mensagem += `Total de Apostas: ${totalApostas}\n`;
             mensagem += `Total Arrecadado: R$ ${valorTotalArrecadado.toFixed(2)}\n`;
@@ -797,6 +1027,83 @@
             window.open(`https://wa.me/?text=${msgEncoded}`, '_blank');
         }
 
+        async function carregarPagamentoPremios(jogos) {
+            try {
+                const container = document.getElementById('container-pagamento-premios');
+                container.innerHTML = '';
+                
+                const jogosFinalizados = (jogos || []).filter(j => j.status && j.status.toString().toLowerCase().trim() === 'finalizado');
+                
+                let ganhadoresTotais = [];
+                
+                for (let jogo of jogosFinalizados) {
+                    const { data: palpites } = await _supabase.from('palpites').select('*').eq('jogo_id', jogo.id).eq('pago', true);
+                    const ganhadores = palpites ? palpites.filter(p => p.palpite_a === jogo.placar_a && p.palpite_b === jogo.placar_b) : [];
+                    
+                    if (ganhadores.length > 0) {
+                        const totalApostas = palpites ? palpites.length : 0;
+                        const valorInscricao = jogo.valor_aposta;
+                        const valorTotalArrecadado = totalApostas * valorInscricao;
+                        const comissaoBanca = valorTotalArrecadado * 0.20;
+                        const premioLiquidoTotal = valorTotalArrecadado - comissaoBanca;
+                        const premioIndividual = premioLiquidoTotal / ganhadores.length;
+                        
+                        ganhadores.forEach(g => {
+                            ganhadoresTotais.push({
+                                ...g,
+                                jogo: jogo,
+                                premioIndividual: premioIndividual
+                            });
+                        });
+                    }
+                }
+                
+                if (ganhadoresTotais.length === 0) {
+                    container.innerHTML = '<p class="text-gray-400 text-sm text-center py-6">Nenhum ganhador para pagar ainda.</p>';
+                    return;
+                }
+                
+                ganhadoresTotais.forEach(g => {
+                    const card = document.createElement('div');
+                    card.className = 'p-4 border-2 border-green-300 rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 flex justify-between items-center';
+                    
+                    const wppLimpo = g.whatsapp.replace(/\D/g,'').replace(/^55/, '') || g.whatsapp;
+                    const wppComPrefixo = '55' + wppLimpo;
+                    const msg = encodeURIComponent(`🏆 Parabéns! Você ganhou no Bolão da Sorte!\n\n⚽ Jogo: ${g.jogo.time_a} x ${g.jogo.time_b}\n🎯 Seu Palpite: ${g.palpite_a} x ${g.palpite_b}\n📊 Placar Final: ${g.jogo.placar_a} x ${g.jogo.placar_b}\n💰 Prêmio: R$ ${g.premioIndividual.toFixed(2)}\n\nEntre em contato para receber seu prêmio!`);
+                    
+                    card.innerHTML = `
+                        <div class="flex-1">
+                            <h4 class="font-bold text-gray-900 text-lg">${g.nome}</h4>
+                            <p class="text-sm text-gray-600">⚽ ${g.jogo.time_a} x ${g.jogo.time_b}</p>
+                            <p class="text-sm text-gray-600">🎯 Palpite: ${g.palpite_a} x ${g.palpite_b}</p>
+                            <p class="text-xs text-gray-500">📱 ${g.whatsapp}</p>
+                            <p class="text-lg font-bold text-green-700 mt-2">R$ ${g.premioIndividual.toFixed(2)}</p>
+                        </div>
+                        <div class="flex gap-2 flex-col">
+                            <a href="https://wa.me/${wppComPrefixo}?text=${msg}" target="_blank" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-bold text-sm transition text-center">
+                                📱 Contatar
+                            </a>
+                            <button onclick="marcarComoPago(${g.id}, '${g.nome}', '${g.whatsapp}')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold text-sm transition">
+                                ✅ Marcar Pago
+                            </button>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            } catch (err) { console.error(err); }
+        }
+
+        async function marcarComoPago(palpiteId, nome, whatsapp) {
+            try {
+                const { error } = await _supabase.from('palpites').update({ premio_pago: true }).eq('id', palpiteId);
+                if (error) throw error;
+                alert(`✅ Pagamento para ${nome} (${whatsapp}) marcado como realizado!`);
+                init();
+            } catch (err) {
+                alert(`Erro ao marcar pagamento: ${err.message}`);
+            }
+        }
+
         function editarBolaoFinalizado() {
             if (!auditoriaBolaoAtual) return;
             
@@ -804,8 +1111,8 @@
             
             document.getElementById('edit-time-a').value = bolaoEditandoAtual.time_a;
             document.getElementById('edit-time-b').value = bolaoEditandoAtual.time_b;
-            document.getElementById('edit-placar-a').value = bolaoEditandoAtual.placar_a;
-            document.getElementById('edit-placar-b').value = bolaoEditandoAtual.placar_b;
+            document.getElementById('edit-placar-a').value = bolaoEditandoAtual.placar_a ?? 0;
+            document.getElementById('edit-placar-b').value = bolaoEditandoAtual.placar_b ?? 0;
             
             document.getElementById('modal-editar-bolao').classList.remove('hidden');
         }
@@ -823,12 +1130,14 @@
                 const placarA = parseInt(document.getElementById('edit-placar-a').value);
                 const placarB = parseInt(document.getElementById('edit-placar-b').value);
                 
-                await _supabase.from('jogos').update({
+                const { error } = await _supabase.from('jogos').update({
                     time_a: timeA,
                     time_b: timeB,
                     placar_a: placarA,
                     placar_b: placarB
                 }).eq('id', bolaoEditandoAtual.id);
+                
+                if (error) throw error;
                 
                 alert('Bolão atualizado com sucesso!');
                 fecharEdicaoBolao();
@@ -845,13 +1154,8 @@
             
             try {
                 const jogoId = auditoriaBolaoAtual.jogo.id;
-                
-                // Excluir palpites
                 await _supabase.from('palpites').delete().eq('jogo_id', jogoId);
-                
-                // Excluir jogo
                 await _supabase.from('jogos').delete().eq('id', jogoId);
-                
                 alert('Bolão excluído com sucesso!');
                 fecharAuditoria();
                 init();
@@ -861,8 +1165,11 @@
         }
 
         async function confirmarPagamento(id) {
-            await _supabase.from('palpites').update({ pago: true }).eq('id', id);
-            init();
+            try {
+                const { error } = await _supabase.from('palpites').update({ pago: true }).eq('id', id);
+                if (error) throw error;
+                init();
+            } catch (err) { alert("Erro ao aprovar: " + err.message); }
         }
 
         async function consultarGanhadores(jogoId) {
@@ -889,7 +1196,7 @@
             document.getElementById('comp-id').innerText = `ID: #${p.id.toString().padStart(6, '0')}`;
             document.getElementById('comp-nome').innerText = p.nome;
             document.getElementById('comp-wpp').innerText = p.whatsapp;
-            document.getElementById('comp-jogo').innerText = `${p.jogos?.time_a} x ${p.jogos?.time_b}`;
+            document.getElementById('comp-jogo').innerText = `${p.jogos?.time_a || '---'} x ${p.jogos?.time_b || '---'}`;
             document.getElementById('comp-placar').innerText = `${p.palpite_a} x ${p.palpite_b}`;
             
             document.getElementById('modal-comprovante').classList.remove('hidden');
@@ -903,11 +1210,13 @@
             if (!comprovantePalpiteAtual) return;
             
             const p = comprovantePalpiteAtual;
-            const limpaWpp = p.whatsapp.replace(/\D/g,'');
+            // CORREÇÃO 2: Adicionar +55 automaticamente
+            const limpaWpp = p.whatsapp.replace(/\D/g,'').replace(/^55/, '') || p.whatsapp;
+            const wppComPrefixo = '55' + limpaWpp;
             
             const msg = encodeURIComponent(`Olá ${p.nome}! 🏆\n\nSeu comprovante de palpite foi validado!\n\n📋 ID: #${p.id.toString().padStart(6, '0')}\n⚽ Partida: ${p.jogos?.time_a} x ${p.jogos?.time_b}\n🎯 Palpite: ${p.palpite_a} x ${p.palpite_b}\n✅ Status: VALIDADO\n\nAguarde o resultado do jogo!`);
             
-            window.open(`https://wa.me/${limpaWpp}?text=${msg}`, '_blank');
+            window.open(`https://wa.me/${wppComPrefixo}?text=${msg}`, '_blank');
         }
 
         function baixarComprovante() {
@@ -918,6 +1227,45 @@
                 link.href = canvas.toDataURL();
                 link.click();
             });
+        }
+
+        // Funções de Login Admin
+        function abrirLoginAdmin() {
+            document.getElementById('modal-login-admin').classList.remove('hidden');
+        }
+
+        function fecharLoginAdmin() {
+            document.getElementById('modal-login-admin').classList.add('hidden');
+            document.getElementById('login-admin-usuario').value = '';
+            document.getElementById('login-admin-senha').value = '';
+            document.getElementById('login-admin-erro').classList.add('hidden');
+        }
+
+        function toggleSenhaVisivel() {
+            const input = document.getElementById('login-admin-senha');
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
+
+        function realizarLoginAdmin(e) {
+            e.preventDefault();
+            const usuario = document.getElementById('login-admin-usuario').value;
+            const senha = document.getElementById('login-admin-senha').value;
+            const erroDiv = document.getElementById('login-admin-erro');
+
+            if (usuario === ADMIN_USER && senha === ADMIN_PASS) {
+                adminLogado = true;
+                fecharLoginAdmin();
+                document.getElementById('user-section').classList.add('hidden');
+                document.getElementById('admin-section').classList.remove('hidden');
+            } else {
+                erroDiv.classList.remove('hidden');
+            }
+        }
+
+        function sairAdmin() {
+            adminLogado = false;
+            document.getElementById('admin-section').classList.add('hidden');
+            document.getElementById('user-section').classList.remove('hidden');
         }
 
         init();
